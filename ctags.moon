@@ -39,16 +39,15 @@ goto_definition = ->
   for line in io.lines tags_file.path do
     unless line\starts_with('!')
       -- { tag, file, search, type } = line\split '\t'
-      { tag, file } = line\split '\t'
-      line_nr = line\umatch 'line:(%d+)'
       -- table.insert(tags, { tag, file, line_no, type })
+      { tag, file } = line\split '\t'
 
       -- TODO: There can be multiple matches. At the moment we just jump to the first.
       -- Also, maybe support displaying Haskell instances for a data type?
       if tag == query_tag
         location =
           file: proj_root\join file\usub(3)
-          :line_nr
+          line_nr: line\umatch 'line:(%d+)'
         -- print "Found #{tag}, location #{location.file} #{location.line_nr}"
         break
 
