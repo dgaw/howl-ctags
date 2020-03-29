@@ -26,7 +26,11 @@ get_query_tag = ->
 
 goto_definition = ->
   proj_root = get_project_root!
+
   query_tag = get_query_tag!
+  if not query_tag or query_tag == ""
+    log.error "No query tag specified!"
+    return
 
   tags_file = proj_root\join "tags"
   unless tags_file.exists
