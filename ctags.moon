@@ -54,7 +54,7 @@ goto_definition = ->
   if location
     app\open location
   else
-    log.warn "Tag #{query_tag} not found!"
+    log.error "Tag #{query_tag} not found!"
 
 PropertyTable {
   :goto_definition,
