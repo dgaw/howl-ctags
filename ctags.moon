@@ -24,15 +24,31 @@ get_query_tag = ->
 
   query
 
-goto_definition = ->
-  proj_root = get_project_root!
+-- Search for the tags file, starting at the directory of the
+-- currently edited file and going up until stop_dir is reached.
+-- tags_filename: short file name of the tags file to look for. Typically 'tags' or 'TAGS'
+get_tags_file = (tags_filename, stop_dir) ->
+  buffer = app.editor and app.editor.buffer
+  file = buffer.file or buffer.directory
 
+  dir = file.parent
+  tags_file = dir\join tags_filename
+
+  if not tags_file.exists
+    while dir != stop_dir do
+      dir = dir.parent
+      tags_file = dir\join tags_filename
+      if tags_file.exists break
+
+  tags_file, dir
+
+goto_definition = ->
   query_tag = get_query_tag!
   if not query_tag or query_tag == ""
     log.error "No query tag specified!"
     return
 
-  tags_file = proj_root\join "tags"
+  tags_file, tags_dir = get_tags_file "tags", get_project_root!
   unless tags_file.exists
     log.error "Tags file #{tags_file} doesn't exist!"
     return
@@ -50,9 +66,9 @@ goto_definition = ->
       -- Also, maybe support displaying Haskell instances for a data type?
       if tag == query_tag
         location =
-          file: proj_root\join file\usub(3)
+          file: tags_dir\join file\usub(3)
           line_nr: line\umatch 'line:(%d+)'
-        -- print "Found #{tag}, location #{location.file} #{location.line_nr}"
+          -- print "Found #{tag}, location #{location.file} #{location.line_nr}"
         break
 
   if location
