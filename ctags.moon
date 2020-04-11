@@ -11,7 +11,7 @@ get_project_root = ->
   return project.root
 
 config.define
-  name: 'ctags_generate_cmd'
+  name: 'ctags_command'
   description: 'Command line tool used to generate the "tags" file'
   default: 'ctags -R'
   type_of: 'string'
