@@ -20,8 +20,9 @@ generate_tags = ->
   buffer = app.editor and app.editor.buffer
   file = buffer.file or buffer.directory
 
+  cmd = config.for_file(file).ctags_command
   cmd_with_args = {}
-  for arg in config.for_file(file).ctags_command\gmatch '%S+'
+  for arg in cmd\gmatch '%S+'
     table.insert cmd_with_args, arg
 
   working_directory = get_project_root!
@@ -32,9 +33,31 @@ generate_tags = ->
     out, err = activities.run_process {title: "Generating tags..."}, process
     unless process.successful
       msg = (if err.is_blank then out else err)\gsub '\n', '   '
-      log.error "Error generating tags: " .. msg
+      log.error "Error generating tags! #{cmd}: " .. msg
   else
     log.error ret
+
+-- A version of generate_tags that doesn't block but doesn't show the nice
+-- activity popup window. I can't decide which one is better so will try both for while.
+generate_tags_async = ->
+  buffer = app.editor and app.editor.buffer
+  file = buffer.file or buffer.directory
+
+  cmd = config.for_file(file).ctags_command
+  cmd_with_args = {}
+  for arg in cmd\gmatch '%S+'
+    table.insert cmd_with_args, arg
+
+  working_directory = get_project_root!
+
+  log.info "Generating tags..."
+
+  out, err, p = Process.execute cmd_with_args, :working_directory
+  if p.successful
+    log.info "Done generating tags!"
+  else
+    msg = (if err.is_blank then out else err)\gsub '\n', '   '
+    log.error "Error generating tags! #{cmd}: " .. msg
 
 get_query_tag = ->
   editor = app.editor
