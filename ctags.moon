@@ -17,13 +17,16 @@ config.define
   type_of: 'string'
 
 generate_tags = ->
-  args = {}
-  for arg in config.ctags_command\gmatch '%S+'
-    table.insert args, arg
+  buffer = app.editor and app.editor.buffer
+  file = buffer.file or buffer.directory
+
+  cmd_with_args = {}
+  for arg in config.for_file(file).ctags_command\gmatch '%S+'
+    table.insert cmd_with_args, arg
 
   working_directory = get_project_root!
 
-  success, ret = pcall Process.open_pipe, args, :working_directory
+  success, ret = pcall Process.open_pipe, cmd_with_args, :working_directory
   if success
     process = ret
     out, err = activities.run_process {title: "Generating tags..."}, process
