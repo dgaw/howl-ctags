@@ -127,5 +127,6 @@ goto_definition = ->
 
 PropertyTable {
   :generate_tags,
+  :generate_tags_async,
   :goto_definition
 }
