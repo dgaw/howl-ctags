@@ -102,26 +102,44 @@ goto_definition = ->
     log.error "Tags file #{tags_file} doesn't exist!"
     return
 
-  -- tags = {}
-  location = nil
+  locations = {}
+  found = false
+
+  -- TODO: Inefficient. Find a better way to de-dupe locations.
+  is_duplicate = (loc) ->
+    for _, l in pairs locations
+      if l.line_nr == loc.line_nr and l.file == loc.file
+        return true
+    return false
 
   for line in io.lines tags_file.path do
     unless line\starts_with('!')
-      -- { tag, file, search, type } = line\split '\t'
-      -- table.insert(tags, { tag, file, line_no, type })
       { tag, file } = line\split '\t'
 
-      -- TODO: There can be multiple matches. At the moment we just jump to the first.
-      -- Also, maybe support displaying Haskell instances for a data type?
+      -- TODO: display Haskell instances for a data type? The info is in the tags file
       if tag == query_tag
-        location =
-          file: tags_dir\join file\usub(3)
-          line_nr: line\umatch 'line:(%d+)'
-          -- print "Found #{tag}, location #{location.file} #{location.line_nr}"
-        break
+        found = true
+        line_nr = line\umatch 'line:(%d+)'
+        file_relpath = file\usub(3)
+        loc = {
+          howl.ui.markup.howl "<comment>#{file_relpath}</>:<number>#{line_nr}</>"
+          file: tags_dir\join file_relpath
+          line_nr: tonumber line_nr
+        }
+        if not is_duplicate loc
+          table.insert locations, loc
+      else
+        -- Speed optimisation. We assume that the tags file is sorted so we can break
+        -- the loop when we leave the block of matching tags
+        if found
+          break
 
-  if location
-    app\open location
+  if #locations == 1
+    app\open locations[1]
+  else if #locations > 1
+    app\open interact.select_location
+      title: "Definitions of '#{query_tag}' in #{tags_file.short_path}"
+      items: locations
   else
     log.error "Tag #{query_tag} not found!"
 
