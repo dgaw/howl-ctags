@@ -1,5 +1,5 @@
-{:app, :interact, :Project} = howl
-{:File} = howl.io
+{:app, :interact, :Project, :activities, :config} = howl
+{:Process} = howl.io
 {:PropertyTable} = howl.util
 
 get_project_root = ->
@@ -9,6 +9,29 @@ get_project_root = ->
   project = Project.get_for_file file
   error "No project associated with #{file}" unless project
   return project.root
+
+config.define
+  name: 'ctags_generate_cmd'
+  description: 'Command line tool used to generate the "tags" file'
+  default: 'ctags -R'
+  type_of: 'string'
+
+generate_tags = ->
+  args = {}
+  for arg in config.ctags_command\gmatch '%S+'
+    table.insert args, arg
+
+  working_directory = get_project_root!
+
+  success, ret = pcall Process.open_pipe, args, :working_directory
+  if success
+    process = ret
+    out, err = activities.run_process {title: "Generating tags..."}, process
+    unless process.successful
+      msg = (if err.is_blank then out else err)\gsub '\n', '   '
+      log.error "Error generating tags: " .. msg
+  else
+    log.error ret
 
 get_query_tag = ->
   editor = app.editor
@@ -77,5 +100,6 @@ goto_definition = ->
     log.error "Tag #{query_tag} not found!"
 
 PropertyTable {
-  :goto_definition,
+  :generate_tags,
+  :goto_definition
 }
