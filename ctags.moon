@@ -1,6 +1,7 @@
 {:app, :interact, :Project, :activities, :config} = howl
 {:Process} = howl.io
 {:PropertyTable} = howl.util
+{:get_monotonic_time} = require 'ljglibs.glib'
 
 get_project_root = ->
   buffer = app.editor and app.editor.buffer
@@ -105,19 +106,23 @@ goto_definition = ->
   locations = {}
   found = false
 
-  -- TODO: Inefficient. Find a better way to de-dupe locations.
+  -- TODO: Find a more efficient way to de-dupe locations.
   is_duplicate = (loc) ->
-    for _, l in pairs locations
+    for l in *locations
       if l.line_nr == loc.line_nr and l.file == loc.file
         return true
     return false
+
+  start = get_monotonic_time!
 
   for line in io.lines tags_file.path do
     unless line\starts_with('!')
       { tag, file } = line\split '\t'
 
+      -- We also check for the tag in parens because Haskell infix functions
+      -- are listed as (function_name) in the tags file. E.g. (||)
       -- TODO: display Haskell instances for a data type? The info is in the tags file
-      if tag == query_tag
+      if tag == query_tag or tag == '(' .. query_tag .. ')'
         found = true
         line_nr = line\umatch 'line:(%d+)'
         file_relpath = file\usub(3)
@@ -133,6 +138,9 @@ goto_definition = ->
         -- the loop when we leave the block of matching tags
         if found
           break
+
+  duration = (get_monotonic_time! - start) / 1000
+  -- log.info "Finished tag lookup in #{duration} ms"
 
   if #locations == 1
     app\open locations[1]
