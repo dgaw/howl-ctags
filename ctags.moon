@@ -117,7 +117,7 @@ goto_definition = ->
 
   for line in io.lines tags_file.path do
     unless line\starts_with('!')
-      { tag, file } = line\split '\t'
+      { tag, file, excerpt } = line\split '\t'
 
       -- We also check for the tag in parens because Haskell infix functions
       -- are listed as (function_name) in the tags file. E.g. (||)
@@ -128,6 +128,7 @@ goto_definition = ->
         file_relpath = file\usub(3)
         loc = {
           howl.ui.markup.howl "<comment>#{file_relpath}</>:<number>#{line_nr}</>"
+          excerpt\usub(3, excerpt.ulen - 4) -- Remove the regex markers
           file: tags_dir\join file_relpath
           line_nr: tonumber line_nr
         }
@@ -148,6 +149,7 @@ goto_definition = ->
     app\open interact.select_location
       title: "Definitions of '#{query_tag}' in #{tags_file.short_path}"
       items: locations
+      columns: { {}, {} }
   else
     log.error "Tag #{query_tag} not found!"
 
