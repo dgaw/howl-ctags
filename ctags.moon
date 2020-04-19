@@ -93,6 +93,9 @@ get_tags_file = (tags_filename, stop_dir) ->
   tags_file, dir
 
 goto_definition = ->
+  buffer = app.editor and app.editor.buffer
+  editor_file = buffer.file or buffer.directory
+
   query_tag = get_query_tag!
   if not query_tag or query_tag == ""
     log.error "No query tag specified!"
@@ -128,14 +131,25 @@ goto_definition = ->
       if tag == query_tag or tag\starts_with query_with_space or tag == query_with_parens
         line_nr = line\umatch 'line:(%d+)'
         file_relpath = file\usub(3)
+        file_obj = tags_dir\join file_relpath
         loc = {
           howl.ui.markup.howl "<comment>#{file_relpath}</>:<number>#{line_nr}</>"
           excerpt\usub(3, excerpt.ulen - 4) -- Remove the regex markers
-          file: tags_dir\join file_relpath
+          file: file_obj
           line_nr: tonumber line_nr
+          score: if file_obj == editor_file -- Currently edited file at the top
+            30
+          else
+            20
         }
         if not is_duplicate loc
           table.insert locations, loc
+
+  -- Sort by score (desc) and then alphabetically (asc)
+  table.sort locations, (a, b) -> if a.score != b.score
+    a.score > b.score
+  else
+    a.file < b.file
 
   duration = (get_monotonic_time! - start) / 1000
   -- log.info "Finished tag lookup in #{duration} ms"
