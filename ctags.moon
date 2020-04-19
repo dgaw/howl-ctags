@@ -104,9 +104,7 @@ goto_definition = ->
     return
 
   locations = {}
-  found = false
 
-  -- TODO: Find a more efficient way to de-dupe locations.
   is_duplicate = (loc) ->
     for l in *locations
       if l.line_nr == loc.line_nr and l.file == loc.file
@@ -115,15 +113,19 @@ goto_definition = ->
 
   start = get_monotonic_time!
 
+  query_with_parens = '(' .. query_tag .. ')'
+  query_with_space = query_tag .. ' '
+
+  -- TODO: Iterating over every line in the file. This is slow!
   for line in io.lines tags_file.path do
     unless line\starts_with('!')
       { tag, file, excerpt } = line\split '\t'
 
+      -- Using starts_with to allow product types in Haskell and Elm.
       -- We also check for the tag in parens because Haskell infix functions
-      -- are listed as (function_name) in the tags file. E.g. (||)
+      -- are listed as (function_name) in the tags file. E.g. (||).
       -- TODO: display Haskell instances for a data type? The info is in the tags file
-      if tag == query_tag or tag == '(' .. query_tag .. ')'
-        found = true
+      if tag == query_tag or tag\starts_with query_with_space or tag == query_with_parens
         line_nr = line\umatch 'line:(%d+)'
         file_relpath = file\usub(3)
         loc = {
@@ -134,11 +136,6 @@ goto_definition = ->
         }
         if not is_duplicate loc
           table.insert locations, loc
-      else
-        -- Speed optimisation. We assume that the tags file is sorted so we can break
-        -- the loop when we leave the block of matching tags
-        if found
-          break
 
   duration = (get_monotonic_time! - start) / 1000
   -- log.info "Finished tag lookup in #{duration} ms"
