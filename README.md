@@ -1,6 +1,6 @@
 # Howl Ctags
 
-"Go to definition" for the Howl editor that uses ctags-compatible files.
+"Go to definition" for the Howl editor that uses ctags.
 
 ## Requirements
 
