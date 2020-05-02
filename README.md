@@ -1,6 +1,10 @@
 # Howl Ctags
 
-"Go to definition" for the Howl editor, which uses ctags-compatible files.
+"Go to definition" for the Howl editor that uses ctags-compatible files.
+
+## Requirements
+
+* [ctags](https://ctags.io/) (or any other program that can generate ctags-compatible files)
 
 ## Installation
 
@@ -21,6 +25,6 @@ Add keyboard shortcuts to your `~/.howl/init.moon` file. E.g.
 
 This bundle provides the following commands:
 
-* `ctags-goto-definition` - go to the definition of the tag under the cursor. If there's no tag under the cursor, a prompt to enter a tag name to look up will be shown.
+* `ctags-goto-definition` - go to the definition of the tag under the cursor. If there's no tag under the cursor, a prompt to enter a tag name will be shown.
 
 * `ctags-generate` - run the ctags command line tool to generate the "tags" file. The tool is run in the project root. Use the `ctags_command` configuration variable to customise the path and arguments for the ctags tool (you can also use another tool that's compatible with ctags).
