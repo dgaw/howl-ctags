@@ -14,7 +14,7 @@ get_project_root = ->
 config.define
   name: 'ctags_command'
   description: 'Command line tool used to generate the "tags" file'
-  default: 'ctags -R'
+  default: 'ctags -R --fields="n"'
   type_of: 'string'
 
 generate_tags = ->
@@ -120,6 +120,7 @@ goto_definition = ->
   query_with_space = query_tag .. ' '
 
   -- TODO: Iterating over every line in the file. This is slow!
+  -- Also, check if keeping the file in memory is faster.
   for line in io.lines tags_file.path do
     unless line\starts_with('!')
       { tag, file, excerpt } = line\split '\t'
@@ -130,7 +131,10 @@ goto_definition = ->
       -- TODO: display Haskell instances for a data type? The info is in the tags file
       if tag == query_tag or tag\starts_with query_with_space or tag == query_with_parens
         line_nr = line\umatch 'line:(%d+)'
-        file_relpath = file\usub(3)
+        file_relpath = if file\starts_with('./')
+          file\usub(3)
+        else
+          file
         file_obj = tags_dir\join file_relpath
         loc = {
           howl.ui.markup.howl "<comment>#{file_relpath}</>:<number>#{line_nr}</>"
